@@ -1,1 +1,1 @@
-# Gu-a-de-im-genes-biom-dicas---Grupo-9---PSIB
+# Guia-de-imagenes-biomedicas-G9-PSIB
