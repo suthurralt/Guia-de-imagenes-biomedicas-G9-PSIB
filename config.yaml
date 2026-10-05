@@ -1,0 +1,50 @@
+# =============================================================================
+# config.yaml — ÚNICO archivo que hay que tocar para procesar otra imagen/video
+# =============================================================================
+# Todo lo que depende de la
+# grabación concreta (rutas, ROI, instante del frame) lo ponemos acá, y el código
+# solo lee estos valores.
+#
+# YAML es un formato de texto "clave: valor". La indentación (con espacios,
+# nunca tabs) define qué está adentro de qué. "null" significa "vacío/ninguno".
+# =============================================================================
+
+entrada:
+  # --- Opción 1: partir de una imagen ya extraída (lo que usamos ahora) ------
+  # Ruta RELATIVA a la raíz del repo. Si es null, se usa el video.
+  imagen_path: data/frames/frame_1_1.png
+
+  # --- Opción 2: partir del video y extraer un frame automáticamente ---------
+  # Solo se usa si imagen_path es null.
+  video_path: data/videos/registro_A1.mp4
+  # Instante (en segundos) del frame representativo dentro del video.
+  frame_tiempo_s: 5.0
+
+# -----------------------------------------------------------------------------
+# Región de Interés (ROI) del ojo
+# -----------------------------------------------------------------------------
+# Se expresa en FRACCIONES del ancho y alto (valores entre 0 y 1), NO en
+# píxeles. Ventaja: si la otra foto tiene distinta resolución pero un encuadre
+# parecido, la ROI sigue cayendo en el mismo lugar relativo.
+#   x0, x1 -> borde izquierdo y derecho (fracción del ancho)
+#   y0, y1 -> borde superior e inferior (fracción del alto)
+# El origen (0,0) es la esquina SUPERIOR izquierda (convención de imágenes).
+# Si ponés "roi: null", se usa la imagen completa.
+roi:
+  x0: 0.36
+  x1: 0.78
+  y0: 0.29
+  y1: 0.48
+
+# -----------------------------------------------------------------------------
+# Parámetros del punto 1.1
+# -----------------------------------------------------------------------------
+modulo1:
+  # Porcentajes de submuestreo pedidos por la guía (1.1.3)
+  escalas_submuestreo: [0.50, 0.25, 0.05]
+  # Profundidades de bits a las que se recuantiza (1.1.4)
+  bits_cuantizacion: [4, 2]
+
+# Carpeta donde se guardan las figuras generadas
+salida:
+  carpeta_resultados: results/modulo1

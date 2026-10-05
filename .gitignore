@@ -1,0 +1,22 @@
+# --- Entornos virtuales (cada uno crea el suyo con requirements.txt) ---
+.venv/
+venv/
+
+# --- Archivos que genera Python solo ---
+__pycache__/
+*.pyc
+
+# --- Checkpoints de Jupyter ---
+.ipynb_checkpoints/
+
+# --- Videos: pesan mucho; GitHub rechaza archivos > 100 MB ---
+# Se guardan local en data/videos/ (o en Drive) y no se suben.
+*.mp4
+*.mov
+*.avi
+*.MOV
+*.MP4
+
+# --- Basura del sistema operativo / editor ---
+.DS_Store
+.vscode/
