@@ -204,10 +204,9 @@ def submuestrear(img: np.ndarray, escala: float,
 
     Paso 1 — Reducir: cv2.resize con INTER_NEAREST toma directamente uno de
     cada N píxeles (decimación pura), que es la definición de muestrear con
-    menor frecuencia espacial. No promedia: así el efecto de la pérdida de
-    muestras es "puro" (y aparece aliasing en bordes finos como pestañas).
+    menor frecuencia espacial. No promedia.
     (INTER_AREA promediaría vecinos = filtrar antes de submuestrear, lo cual
-    suaviza; es lo correcto para achicar fotos, pero esconde el fenómeno.)
+    suaviza, no hacemos esto porque queremos ver bien el aliasing.)
 
     Paso 2 — Volver a ampliar (opcional): para COMPARAR lado a lado con el
     original hay que mostrarla al mismo tamaño. Se amplía otra vez con
