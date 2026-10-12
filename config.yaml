@@ -49,3 +49,30 @@ modulo1:
 # Carpeta donde se guardan las figuras generadas
 salida:
   carpeta_resultados: results/modulo1
+
+# -----------------------------------------------------------------------------
+# Parámetros del punto 1.2 (transformaciones de intensidad, ruido y filtros)
+# -----------------------------------------------------------------------------
+modulo1_2:
+  # 1.2.2 — Rango de interés [f1, f2] (pupila + iris)
+  # Elegirlos mirando el histograma: la "joroba" de valores bajos es el iris y
+  # la pupila. Si se ponen en null, se calculan solos con los percentiles de
+  # abajo (p. ej. 1 y 25 = el 25 % más oscuro de la ROI, sin el 1 % extremo).
+  f1: 0
+  f2: 100
+  percentil_bajo: 1
+  percentil_alto: 25
+
+  # 1.2.3 — CLAHE
+  clahe_clip: 2.0       # límite de contraste (más alto = más realce y más ruido)
+  clahe_grilla: 8       # la ROI se divide en una grilla de 8 x 8 bloques
+
+  # 1.2.4 — Ruido
+  semilla: 42           # semilla aleatoria: mismo ruido en cada ejecución
+  ruido_gauss_sigma: 20         # desvío del ruido gaussiano (en niveles de gris)
+  ruido_sp_densidad: 0.05       # fracción de píxeles con sal o pimienta (5 %)
+  ruido_speckle_varianza: 0.04  # varianza del ruido multiplicativo (desvío 0.2)
+
+  # 1.2.4 — Filtros (tamaño de ventana, siempre IMPAR)
+  kernel: 5
+  gauss_sigma: 1.0      # desvío de la campana del filtro gaussiano (en píxeles)
