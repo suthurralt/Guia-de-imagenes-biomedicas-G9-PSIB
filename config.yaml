@@ -78,6 +78,18 @@ modulo1_2:
   gauss_sigma: 1.0      # desvío de la campana del filtro gaussiano (en píxeles)
 
 # -----------------------------------------------------------------------------
+# Parámetros del punto 1.3 - Bordes y frecuencia
+# -----------------------------------------------------------------------------
+modulo1_3:
+  kernel: 5         # Tamaño de las ventanas
+  sigma: 1.0        # Desvío de la campana del filtro gaussiano (en píxeles)
+  corte: 0.10       # Umbral de corte de la FFT (fracción de la frecuencia máxima)
+  texto_b: "PSIB"
+
+
+
+
+# -----------------------------------------------------------------------------
 # Parámetros del punto 2.1 (segmentación)
 # -----------------------------------------------------------------------------
 modulo2:

@@ -4,4 +4,5 @@ opencv-python>=4.8   # lectura de imágenes/video, conversiones de color, resize
 matplotlib>=3.7      # gráficos (preferido sobre cv2.imshow en notebooks)
 PyYAML>=6.0          # lectura de config.yaml
 ipykernel>=6.0       # permite ejecutar notebooks .ipynb en VS Code
-scikit-image>=0.20   # contiene técnica Snake para segmentación.
+scikit-image>=0.21 # métricas PSNR y SSIM (1.3) y contornos activos Snake para segmentar (2.1)
+
