@@ -2,7 +2,7 @@
 src/modulo2/morfologia.py — Morfología matemática sobre la máscara de la pupila.
 
 Paso 1: las cuatro operaciones básicas.
-    Erosión      encoge la máscara (borra salientes finos y píxeles sueltos)
+    Erosión      achica la máscara (borra salientes finos y píxeles sueltos)
     Dilatación   agranda la máscara (tapa huecos chicos)
     Apertura     erosión -> dilatación: quita salientes y manchas chicas
     Cierre       dilatación -> erosión: rellena muescas y huecos (p. ej. el reflejo)
