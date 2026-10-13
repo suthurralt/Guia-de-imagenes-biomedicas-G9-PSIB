@@ -1,0 +1,1 @@
+"""Módulo 2: segmentación y descripción morfológica."""
