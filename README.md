@@ -11,9 +11,20 @@ requirements.txt       <- dependencias
 src/
   config.py            <- lectura del config
   modulo1/
-    carga_muestreo.py  <- 1.1: carga, ROI, submuestreo, cuantización, color
+    carga_muestreo.py           <- 1.1: carga, ROI, submuestreo, cuantización, color
+    calidad_filtrado.py         <- 1.2: histograma, ecualización, escalado, filtrado espacial
+    bordes_frecuencia.py        <- 1.3: bordes, TF 2D, PSD, filtrado frecuencial
+  modulo2/
+    segmentacion.py           <- 2.1: Otsu, K-means, Watershed, Snake
+    morfologia.py             <- 2.2: dilatación, erosión, apertura, cierre, esqueletización
+    anotacion.py              <- 2.2: anotación manual --> máscara de referencia
+    metricas.py               <- 2.2: Recall, precisión, Dice, Jaccard
 notebooks/
   01_1_carga_muestreo_color.ipynb
+  01_2_calidad_intensidad_color.ipynb
+  01_3_bordes_frecuencia_refactorizado.ipynb
+  02_1_segmentacion.ipynb
+  02_2_morfologia.ipynb
 data/
   frames/              <- frames extraídos (sí se suben)
   videos/              <- videos (NO se suben, ver .gitignore)
