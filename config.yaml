@@ -12,7 +12,7 @@
 entrada:
   # --- Opción 1: partir de una imagen ya extraída (lo que usamos ahora) ------
   # Ruta RELATIVA a la raíz del repo. Si es null, se usa el video.
-  imagen_path: data/frames/frame_1_1.png
+  imagen_path: data/frames/frame_Sofi_1.png
 
   # --- Opción 2: partir del video y extraer un frame automáticamente ---------
   # Solo se usa si imagen_path es null.
@@ -31,11 +31,22 @@ entrada:
 # El origen (0,0) es la esquina SUPERIOR izquierda (convención de imágenes).
 # Si ponés "roi: null", se usa la imagen completa.
 # Ponemos el roi en fracciones pq si estuviera en píxeles con una imagen con otro tamaño, no sirve.
+# roi para frame_Sofi_1
 roi:
   x0: 0.36
   x1: 0.78
-  y0: 0.29
+  y0: 0.27
   y1: 0.48
+
+
+# roi para Frame_Delca_1
+#roi:
+ # x0: 0.22
+ # x1: 0.7
+ # y0: 0.35
+ # y1: 0.5
+
+
 
 # -----------------------------------------------------------------------------
 # Parámetros del punto 1.1
