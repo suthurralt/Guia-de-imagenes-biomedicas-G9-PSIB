@@ -86,15 +86,12 @@ modulo1_3:
   corte: 0.10       # Umbral de corte de la FFT (fracción de la frecuencia máxima)
   texto_b: "PSIB"
 
-
-
-
 # -----------------------------------------------------------------------------
 # Parámetros del punto 2.1 (segmentación)
 # -----------------------------------------------------------------------------
 modulo2:
   snake:
-    factor_radio_inicial: 1  # radio inicial = factor * radio estimado
+    factor_radio_inicial: 1.15  # radio inicial = factor * radio estimado
     suavizado_k: 15             # tamaño de ventana del gaussiano previo
     suavizado_sigma: 3          # sigma del gaussiano previo
     alpha: 0.015                # tensión de la curva
@@ -107,5 +104,23 @@ modulo2:
     factor_anillo_exterior: 1.8
 
   kmeans:
-    k_clusters: 4
     factor_ventana: 1
+
+
+  morfologia:
+    kernel: 3
+    iteraciones: 1
+    kernel_forma: ellipse
+
+    # Operaciones a comparar
+    comparar:
+      - erosion
+      - dilatacion
+      - apertura
+      - cierre
+      - apertura_cierre
+      - cierre_apertura
+
+    # Operación elegida para el procesamiento final.
+    # Dejar null mientras se evalúan los resultados.
+    operacion_final: null
