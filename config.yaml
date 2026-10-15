@@ -16,7 +16,7 @@ entrada:
 
   # --- Opción 2: partir del video y extraer un frame automáticamente ---------
   # Solo se usa si imagen_path es null.
-  video_path: data/videos/registro_A1.mp4
+  video_path: data/videos/Video_Sofi_1.mp4
   # Instante (en segundos) del frame representativo dentro del video.
   frame_tiempo_s: 5.0
 
@@ -135,3 +135,51 @@ modulo2:
     # Operación elegida para el procesamiento final.
     # Dejar null mientras se evalúan los resultados.
     operacion_final: null
+
+# -----------------------------------------------------------------------------
+# Parámetros del Módulo 4 (compresión)
+# -----------------------------------------------------------------------------
+modulo4:
+  # Se comprime SIEMPRE el frame original (el de `entrada`) y, además, cada
+  # imagen segmentada del módulo 2 (rutas relativas a la raíz del repo).
+  # Se leen tal cual están guardadas, en escala de grises.
+  imagenes_segmentadas:
+    - results/modulo2/2_1_6_watershed.png   # --> se guarda la máscara en el módulo 2
+    - results/modulo2/2_1_4_otsu_mascara.png
+    - results/modulo2/2_1_5_Snake_mascara.png
+  # "rgb" (3 canales, como el frame original) o "gris" (1 canal)
+  espacio: rgb
+
+  # RLE: bits con los que se guarda la longitud de cada racha.
+  # Con 8 bits la racha máxima es 255; las más largas se parten.
+  rle_bits_longitud: 8
+
+  # Huffman: decodificar y comprobar que la imagen vuelve idéntica (tarda
+  # algunos segundos con el frame completo). false = solo calcular tamaños.
+  verificar_huffman: true
+
+  # JPEG: factores de calidad pedidos por la consigna
+  calidades_jpeg: [90, 50, 10, 5]
+  # Barrido más fino, para las curvas PSNR/SSIM vs ratio y el índice de bloques
+  calidades_barrido: [100, 95, 90, 80, 70, 60, 50, 40, 30, 20, 15, 10, 8, 5, 3, 1]
+
+  # Tamaño del bloque de la DCT de JPEG (para el índice de bloques)
+  bloque_jpeg: 8
+
+  # Zonas para comparar artefactos (en función del radio del iris estimado)
+  zonas:
+    ancho_borde_px: 2              # franja de ± px alrededor del borde pupilar
+    factor_iris: 0.85              # el iris llega hasta 0.85 · r_iris (sin el limbo)
+    esclerotica_rango: [1.3, 1.8]  # corona de la esclerótica (en radios del iris)
+    # Filas de la esclerótica, relativas al centro del iris (en radios del iris;
+    # y crece hacia abajo). Solo a los costados del iris, sin párpados/pestañas.
+    esclerotica_filas: [-0.3, 0.6]
+    ventana_textura: 7             # ventana del desvío local (textura de cada zona)
+
+  # ¿La compresión cambia el diámetro pupilar?
+  diametro:
+    calidades: [90, 50, 10, 5]
+    # Recorrer el video de `entrada.video_path` (si existe) y medir D(t)
+    # en el original y con cada Q. paso_frames = 1 de cada N frames.
+    usar_video: true
+    paso_frames: 3
