@@ -19,12 +19,15 @@ src/
     morfologia.py             <- 2.2: dilatación, erosión, apertura, cierre, esqueletización
     anotacion.py              <- 2.2: anotación manual --> máscara de referencia
     metricas.py               <- 2.2: Recall, precisión, Dice, Jaccard
+  modulo4/
+    compresion.py             <- 4: Huffman, RLE (H/V), JPEG, PSNR/SSIM, blocking, diámetro
 notebooks/
   01_1_carga_muestreo_color.ipynb
   01_2_calidad_intensidad_color.ipynb
   01_3_bordes_frecuencia_refactorizado.ipynb
   02_1_segmentacion.ipynb
   02_2_morfologia.ipynb
+  04_compresion.ipynb
 data/
   frames/              <- frames extraídos (sí se suben)
   videos/              <- videos (NO se suben, ver .gitignore)
