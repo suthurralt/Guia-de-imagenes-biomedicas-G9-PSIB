@@ -20,6 +20,9 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+import pandas as pd
+
+from src.modulo1 import carga_muestreo as cm
 
 
 # ============================================================
@@ -181,3 +184,94 @@ def anotar_frames(obtener_roi, tiempos, carpeta, modo="poligono",
         mascara = puntos_a_mascara(puntos, roi.shape, modo=modo)
         guardar_anotacion(carpeta, t, puntos, mascara, roi)
         print(f"t = {t} s: guardado ({len(puntos)} puntos).")
+
+
+# ============================================================
+# 5. ALINEAR LAS ANOTACIONES CON LA ROI ACTUAL
+# ============================================================
+# Las máscaras manuales se guardan en coordenadas de la ROI que había en
+# config.yaml AL MOMENTO DE ANOTAR. Si después se cambia la ROI, la máscara
+# manual y la automática ya no tienen el mismo tamaño ni el mismo origen y no
+# se pueden comparar píxel a píxel (Dice, Jaccard...). En lugar de re-anotar,
+# se busca dónde estaba la ROI anotada dentro del frame y se traslada la
+# máscara a la ROI actual.
+
+def ubicar_anotacion(frame_rgb, imagen_anotada_bgr):
+    """Dónde estaba la ROI anotada dentro del frame: (x0, y0, correlación).
+
+    Se busca la imagen anotada (contorno_manual_*.png, que es la ROI de ese
+    momento con el contorno dibujado) dentro del frame completo con
+    correlación cruzada normalizada (cv2.matchTemplate). El máximo de la
+    correlación da la esquina superior izquierda. Se usa solo el canal
+    verde, que no cambia si en algún paso se invirtió el orden RGB/BGR.
+    Una correlación cercana a 1 indica que la ubicación es confiable.
+    """
+    res = cv2.matchTemplate(frame_rgb[:, :, 1], imagen_anotada_bgr[:, :, 1],
+                            cv2.TM_CCOEFF_NORMED)
+    _, maximo, _, (x, y) = cv2.minMaxLoc(res)
+    return int(x), int(y), float(maximo)
+
+
+def pegar_desplazada(mascara, forma, dx, dy):
+    """Copia `mascara` desplazada (dx, dy) en un lienzo de tamaño `forma`.
+    Lo que queda fuera del lienzo se recorta."""
+    salida = np.zeros(forma[:2], dtype=np.uint8)
+    h, w = mascara.shape
+    H, W = forma[:2]
+    ys, xs = max(0, dy), max(0, dx)
+    ye, xe = min(H, dy + h), min(W, dx + w)
+    if ye > ys and xe > xs:
+        salida[ys:ye, xs:xe] = mascara[ys - dy:ye - dy, xs - dx:xe - dx]
+    return salida
+
+
+def alinear_anotaciones(carpeta, ruta_video, roi, correlacion_min=0.8):
+    """Carga las anotaciones y las expresa en coordenadas de la ROI actual.
+
+    Para cada tiempo t anotado: extrae el frame del video, ubica la ROI
+    anotada (ubicar_anotacion) y traslada la máscara manual a la ROI
+    actual (`roi`, en fracciones, como en config.yaml).
+
+    Si la correlación de la ubicación es menor que `correlacion_min`, la
+    imagen anotada no aparece en ese frame: la anotación es de OTRO video
+    (o el frame cambió) y se descarta. Con el video correcto la correlación
+    da > 0,9; con un video distinto, ~0,4–0,6.
+
+    Devuelve:
+        anotaciones: {t: máscara uint8 0/255 del tamaño de la ROI actual}
+        tabla: DataFrame con t, desplazamiento (dx, dy), correlación,
+               área de la máscara original y área que quedó dentro de la
+               ROI actual (si son distintas, parte de la pupila anotada
+               quedó fuera de la ROI).
+    """
+    carpeta = Path(carpeta)
+    originales = dict(sorted(cargar_anotaciones(carpeta).items()))
+    alineadas, filas = {}, []
+    for t, m in originales.items():
+        frame = cm.extraer_frame(ruta_video, t)
+        x0, x1, y0, y1 = cm.roi_a_pixeles(frame.shape, roi)
+        forma_roi = (y1 - y0, x1 - x0)
+
+        ruta_img = carpeta / f"contorno_manual_{t}s.png"
+        if ruta_img.exists():
+            ax, ay, corr = ubicar_anotacion(frame, cv2.imread(str(ruta_img)))
+            if corr < correlacion_min:
+                print(f"t = {t} s: la anotación no coincide con este video "
+                      f"(correlación {corr:.2f} < {correlacion_min}); se omite.")
+                continue
+        elif m.shape == forma_roi:
+            ax, ay, corr = x0, y0, np.nan      # sin imagen: se asume la misma ROI
+        else:
+            print(f"t = {t} s: no hay imagen para ubicar la anotación y la ROI cambió; se omite.")
+            continue
+
+        alineada = pegar_desplazada(m, forma_roi, ax - x0, ay - y0)
+        if not alineada.any():
+            print(f"t = {t} s: la pupila anotada queda fuera de la ROI actual; se omite.")
+            continue
+        alineadas[t] = alineada
+        filas.append({"t_s": t, "dx_px": ax - x0, "dy_px": ay - y0, "correlacion": corr,
+                      "forma_anotada": m.shape, "forma_roi_actual": forma_roi,
+                      "area_anotada_px": int((m > 0).sum()),
+                      "area_dentro_roi_px": int((alineada > 0).sum())})
+    return alineadas, pd.DataFrame(filas)

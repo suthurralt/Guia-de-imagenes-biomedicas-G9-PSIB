@@ -19,6 +19,11 @@ src/
     morfologia.py             <- 2.2: dilatación, erosión, apertura, cierre, esqueletización
     anotacion.py              <- 2.2: anotación manual --> máscara de referencia
     metricas.py               <- 2.2: Recall, precisión, Dice, Jaccard
+  modulo3/
+    descriptores.py           <- 3.1: máscara final, forma (A, P, centroide, circularidad, excentricidad),
+                                 textura de 1er orden (R, G, B) y GLCM
+    dinamica.py               <- 3.2: video frame a frame, artefactos, curva D(t)/A(t), estímulo,
+                                 latencia/amplitud/velocidades, validación MAE/RMSE, CSV
   modulo4/
     compresion.py             <- 4: Huffman, RLE (H/V), JPEG, PSNR/SSIM, blocking, diámetro
 notebooks/
@@ -27,6 +32,8 @@ notebooks/
   01_3_bordes_frecuencia_refactorizado.ipynb
   02_1_segmentacion.ipynb
   02_2_morfologia.ipynb
+  03_1_descriptores_textura.ipynb
+  03_2_video_curva_temporal.ipynb
   04_compresion.ipynb
 data/
   frames/              <- frames extraídos (sí se suben)
@@ -45,3 +52,7 @@ pip install -r requirements.txt
 1. Poner la imagen en `data/frames/` (o el video en `data/videos/`).
 2. Editar `config.yaml`: `imagen_path` (o `imagen_path: null` + `video_path`) y la `roi`.
 3. Abrir el notebook y ejecutar *Run All*.
+
+El Módulo 3 (03_2) recorre el video de `entrada.video_path` y deja en `results/modulo3/`
+la curva frame a frame (`<video>_curva.csv`) y los parámetros fisiológicos
+(`<video>_parametros.csv`: latencia, amplitud, velocidades de constricción/redilatación).

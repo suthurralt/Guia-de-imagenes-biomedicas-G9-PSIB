@@ -12,8 +12,8 @@
 entrada:
   # --- Opción 1: partir de una imagen ya extraída (lo que usamos ahora) ------
   # Ruta RELATIVA a la raíz del repo. Si es null, se usa el video.
-  imagen_path: data/frames/frame_Sofi_1.png
-
+  # imagen_path: data/frames/frame_Sofi_1.png  --> lo pongo null pq quiero que se obtenga el frame del video automáticamente
+  imagen_path: null
   # --- Opción 2: partir del video y extraer un frame automáticamente ---------
   # Solo se usa si imagen_path es null.
   video_path: data/videos/Video_Sofi_1.mp4
@@ -31,21 +31,12 @@ entrada:
 # El origen (0,0) es la esquina SUPERIOR izquierda (convención de imágenes).
 # Si ponés "roi: null", se usa la imagen completa.
 # Ponemos el roi en fracciones pq si estuviera en píxeles con una imagen con otro tamaño, no sirve.
-# roi para frame_Sofi_1
+# roi para frame_Delca_1
 roi:
   x0: 0.36
   x1: 0.78
-  y0: 0.27
+  y0: 0.35
   y1: 0.48
-
-
-# roi para Frame_Delca_1
-#roi:
- # x0: 0.22
- # x1: 0.7
- # y0: 0.35
- # y1: 0.5
-
 
 
 # -----------------------------------------------------------------------------
@@ -135,6 +126,100 @@ modulo2:
     # Operación elegida para el procesamiento final.
     # Dejar null mientras se evalúan los resultados.
     operacion_final: null
+
+# -----------------------------------------------------------------------------
+# Parámetros del Módulo 3 (descriptores, textura y dinámica temporal)
+# -----------------------------------------------------------------------------
+# El Módulo 3 trabaja SIEMPRE sobre el video de `entrada.video_path` (la
+# misma ROI de arriba) y usa la segmentación del Módulo 2 (Watershed).
+modulo3:
+  # Operación morfológica final sobre la máscara de Watershed. Se toma la
+  # mejor combinación del barrido de 2.2 (erosión k=3, 2 iteraciones: Dice
+  # 0,849 contra la anotación manual). null en `operacion` = sin morfología.
+  morfologia:
+    operacion: erosion
+    kernel: 3
+    iteraciones: 2
+    kernel_forma: ellipse
+
+  # --- 3.1 Descriptores en un frame -----------------------------------------
+  # Instante (s) del frame del video sobre el que se calculan forma y textura.
+  # Conviene un frame con luz (iris bien iluminado, sin el reflejo de la
+  # ventana sobre la pupila).
+  tiempo_frame_s: 5.0
+  # Niveles de gris a los que se cuantiza la ROI para entropía y GLCM.
+  # El primero es el principal; el resto se usa para comparar.
+  niveles_gris: [32, 64]
+  glcm:
+    distancias: [1, 2]               # en píxeles
+    angulos_grados: [0, 45, 90, 135] # se promedian -> textura sin dirección
+  region_iris:
+    factor_iris: 0.85      # disco de 0,85·r_iris (sin el limbo)
+    margen_pupila_px: 2    # se saca la pupila dilatada 2 px (borde mezclado)
+    fila_min_rel: -0.6     # sin las filas por encima de cy − 0,6·r_iris (párpado)
+    k_reflejo: 3.0         # reflejo = gris > mediana + 3·MAD del iris
+
+  # --- 3.2 Video y curva temporal --------------------------------------------
+  video:
+    paso_frames: 1         # 1 = todos los frames
+    paso_iris: 10          # cada cuántos frames se mide el radio del iris (escala)
+
+  # Estímulo luminoso. null = detección automática a partir del salto de
+  # brillo medio del frame (la luz ilumina toda la cara). Se pueden forzar
+  # a mano con una lista de tiempos en segundos, p. ej. [3.84].
+  estimulo:
+    t_encendido_s: null
+    t_apagado_s: null
+    umbral_salto_min: 6.0  # salto mínimo de brillo entre frames (niveles de gris)
+    k_mad: 10              # umbral = max(umbral_salto_min, k_mad · MAD del salto)
+    separacion_min_s: 1.0  # dos saltos más cercanos que esto son el mismo evento
+
+  # Detección y tratamiento de artefactos (parpadeos, movimientos, fallas)
+  artefactos:
+    circularidad_min: 0.55       # forma muy irregular -> la máscara se escapó
+    excentricidad_max: 0.90      # forma muy alargada -> párpado/pestañas
+    salto_centroide_max_px: 8    # movimiento brusco del ojo entre frames
+    hampel_ventana_s: 1.0        # filtro de Hampel: ventana de la mediana móvil
+    hampel_k: 3.0                # outlier si |D − mediana| > k · 1,4826 · MAD
+    hueco_max_s: 0.35            # huecos más cortos se interpolan; más largos quedan NaN
+
+  # Suavizado de la curva antes de derivar (velocidades)
+  suavizado:
+    mediana_frames: 5            # mediana móvil (impares): saca picos aislados
+    sigma_s: 0.10                # gaussiano (desvío en segundos)
+
+  # Parámetros fisiológicos
+  parametros:
+    ventana_basal_s: 1.0         # basal = mediana del 1 s previo al estímulo
+    ventana_respuesta_s: 2.0     # se busca el extremo en los 2 s siguientes
+    fraccion_inicio: 0.2         # inicio = cuando |v| supera 20 % de su pico
+    k_ruido: 3.0                 # respuesta válida si su cambio > 3 · ruido basal
+
+  # Escala píxel -> mm. "iris": usa el diámetro del iris medido en el video y
+  # un diámetro real típico (~11,7 mm, adulto). "manual": usa mm_por_px.
+  # null: solo píxeles.
+  escala:
+    modo: iris
+    diametro_iris_mm: 11.7
+    mm_por_px: null
+    # Verificación opcional con una regla milimetrada visible en el video
+    # (null si no hay). Coordenadas en píxeles del FRAME completo: una fila
+    # que cruce las rayitas de los milímetros y el tramo [x0, x1] de la regla.
+    regla:
+      tiempo_s: 0.0
+      fila_px: 552
+      x0_px: 30
+      x1_px: 330
+
+  # Validación contra la anotación manual del Módulo 2
+  carpeta_anotaciones: results/modulo2/anotaciones_manuales
+
+  # Otros registros (videos) para la variabilidad entre trials. Cada uno con
+  # su video y su ROI (fracciones). Vacío = solo el video de `entrada`.
+  # Ejemplo:
+  #   - video_path: data/videos/Video_Delca_1.mp4
+  #     roi: {x0: 0.46, x1: 0.74, y0: 0.33, y1: 0.47}
+  registros_extra: []
 
 # -----------------------------------------------------------------------------
 # Parámetros del Módulo 4 (compresión)
