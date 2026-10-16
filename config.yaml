@@ -31,7 +31,7 @@ entrada:
 # El origen (0,0) es la esquina SUPERIOR izquierda (convención de imágenes).
 # Si ponés "roi: null", se usa la imagen completa.
 # Ponemos el roi en fracciones pq si estuviera en píxeles con una imagen con otro tamaño, no sirve.
-# roi para frame_Sofi_1
+# roi para frame_Delca_1
 roi:
   x0: 0.36
   x1: 0.78
@@ -135,7 +135,7 @@ modulo2:
 modulo3:
   # Operación morfológica final sobre la máscara de Watershed. Se toma la
   # mejor combinación del barrido de 2.2 (erosión k=3, 2 iteraciones: Dice
-  # 0,859 contra la anotación manual). null en `operacion` = sin morfología.
+  # 0,849 contra la anotación manual). null en `operacion` = sin morfología.
   morfologia:
     operacion: erosion
     kernel: 3

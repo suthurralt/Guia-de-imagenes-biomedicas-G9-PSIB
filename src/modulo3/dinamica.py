@@ -492,35 +492,15 @@ def procesar_registro(ruta_video: str | Path, cfg: dict, roi: dict | None = None
 # 8. VALIDACIÓN CONTRA LA ANOTACIÓN MANUAL
 # =============================================================================
 
-def ubicar_anotacion(frame_rgb: np.ndarray, imagen_anotada_bgr: np.ndarray) -> tuple[int, int, float]:
-    """Dónde estaba la ROI anotada dentro del frame: (x0, y0, correlación).
-
-    Las anotaciones del Módulo 2 se guardaron en coordenadas de la ROI que
-    había en ese momento en config.yaml. Si después la ROI cambió, las
-    coordenadas no coinciden. Para no depender de eso, se busca la imagen
-    anotada (contorno_manual_*.png) dentro del frame con correlación cruzada
-    normalizada (cv2.matchTemplate). Se usa solo el canal verde, que no
-    cambia si en algún paso se invirtió el orden RGB/BGR.
-    """
-    res = cv2.matchTemplate(frame_rgb[:, :, 1], imagen_anotada_bgr[:, :, 1], cv2.TM_CCOEFF_NORMED)
-    _, maximo, _, (x, y) = cv2.minMaxLoc(res)
-    return int(x), int(y), float(maximo)
-
-
-def _pegar(mascara: np.ndarray, forma: tuple, dx: int, dy: int) -> np.ndarray:
-    """Copia `mascara` desplazada (dx, dy) en un lienzo de tamaño `forma`."""
-    salida = np.zeros(forma[:2], dtype=np.uint8)
-    h, w = mascara.shape
-    H, W = forma[:2]
-    ys, xs = max(0, dy), max(0, dx)
-    ye, xe = min(H, dy + h), min(W, dx + w)
-    if ye > ys and xe > xs:
-        salida[ys:ye, xs:xe] = mascara[ys - dy:ye - dy, xs - dx:xe - dx]
-    return salida
+# La ubicación de la anotación y el traslado de la máscara viven en el
+# Módulo 2 (src/modulo2/anotacion.py), donde se usan también en 2.2.
+ubicar_anotacion = an.ubicar_anotacion
+_pegar = an.pegar_desplazada
 
 
 def validar_contra_manual(ruta_video: str | Path, cfg: dict, carpeta_anot: str | Path,
-                          curva: pd.DataFrame | None = None) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
+                          curva: pd.DataFrame | None = None,
+                          correlacion_min: float = 0.8) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     """Compara el área/diámetro automático con la anotación manual.
 
     Para cada frame anotado (t en segundos) se calcula:
@@ -528,40 +508,37 @@ def validar_contra_manual(ruta_video: str | Path, cfg: dict, carpeta_anot: str |
       - A y D automáticos con el pipeline del Módulo 3 (Watershed + erosión),
       - A y D con Watershed sin morfología (para ver qué aporta la erosión),
       - el valor de la curva suavizada en ese frame (si se pasa `curva`),
-      - Dice entre la máscara automática y la manual (alineadas con
-        ubicar_anotacion).
+      - Dice entre la máscara automática y la manual.
+    La máscara manual se traslada a la ROI actual con
+    an.alinear_anotaciones. Las anotaciones que no coinciden con este video
+    (correlación < correlacion_min, p. ej. porque se anotó otro video) se
+    descartan: si no queda ninguna, las tablas vuelven vacías.
     Devuelve (tabla por frame, resumen MAE/RMSE/sesgo, {t: máscaras}).
     """
-    carpeta_anot = Path(carpeta_anot)
-    anotaciones = dict(sorted(an.cargar_anotaciones(carpeta_anot).items()))
+    anotaciones, alineacion = an.alinear_anotaciones(carpeta_anot, ruta_video, cfg["roi"],
+                                                     correlacion_min)
+    if not anotaciones:
+        print("No hay anotaciones manuales de este video: se saltea la validación.")
+        return pd.DataFrame(), pd.DataFrame(), {}
+    alineacion = alineacion.set_index("t_s")
     fps = info_video(ruta_video)["fps"]
     filas, mascaras = [], {}
-    for t, m_manual in anotaciones.items():
+    for t, manual in anotaciones.items():
         frame = cm.extraer_frame(ruta_video, t)
-        x0, x1, y0, y1 = cm.roi_a_pixeles(frame.shape, cfg["roi"])
-        roi = frame[y0:y1, x0:x1]
-
-        # Ubicar la anotación (si existe la imagen con el contorno)
-        ruta_img = carpeta_anot / f"contorno_manual_{t}s.png"
-        dx = dy = 0
-        corr = np.nan
-        if ruta_img.exists():
-            ax, ay, corr = ubicar_anotacion(frame, cv2.imread(str(ruta_img)))
-            dx, dy = ax - x0, ay - y0
-        manual = _pegar(m_manual, roi.shape, dx, dy)
-
+        roi = cm.recortar_roi(frame, cfg["roi"])
         auto = de.mascara_pupila(roi, cfg)
         ws = seg.segmentar_pupila(roi, cfg)
-        fila = {"t_s": t, "frame": int(round(t * fps)), "dx_px": dx, "dy_px": dy,
-                "correlacion_ubicacion": corr,
-                "A_manual_px2": int((m_manual > 0).sum()),
-                "D_manual_px": 2 * np.sqrt((m_manual > 0).sum() / np.pi)}
+        a_man = int((manual > 0).sum())
+        fila = {"t_s": t, "frame": int(round(t * fps)),
+                "dx_px": int(alineacion.loc[t, "dx_px"]), "dy_px": int(alineacion.loc[t, "dy_px"]),
+                "correlacion_ubicacion": alineacion.loc[t, "correlacion"],
+                "A_manual_px2": a_man, "D_manual_px": 2 * np.sqrt(a_man / np.pi)}
         for nombre, r in [("auto", auto), ("watershed", ws)]:
             m = r["mascara"]
             a = int((m > 0).sum()) if m is not None else np.nan
             fila[f"A_{nombre}_px2"] = a
             fila[f"D_{nombre}_px"] = 2 * np.sqrt(a / np.pi) if m is not None else np.nan
-            fila[f"dice_{nombre}"] = dice(manual, m) if m is not None and corr > 0.5 else np.nan
+            fila[f"dice_{nombre}"] = dice(manual, m) if m is not None else np.nan
         if curva is not None:
             k = (curva.frame - fila["frame"]).abs().idxmin()
             fila["D_curva_suave_px"] = curva.loc[k, "diametro_suave_px"]
