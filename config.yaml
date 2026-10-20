@@ -16,9 +16,9 @@ entrada:
   imagen_path: null
   # --- Opción 2: partir del video y extraer un frame automáticamente ---------
   # Solo se usa si imagen_path es null.
-  video_path: data/videos/Video_Sofi_1.mp4
+  video_path: data/videos/Video_Sofi_2.mp4
   # Instante (en segundos) del frame representativo dentro del video.
-  frame_tiempo_s: 5.0
+  frame_tiempo_s: 17.0
 
 # -----------------------------------------------------------------------------
 # Región de Interés (ROI) del ojo
@@ -31,12 +31,12 @@ entrada:
 # El origen (0,0) es la esquina SUPERIOR izquierda (convención de imágenes).
 # Si ponés "roi: null", se usa la imagen completa.
 # Ponemos el roi en fracciones pq si estuviera en píxeles con una imagen con otro tamaño, no sirve.
-# roi para frame_Delca_1
+# roi para frame_Sofi_2
 roi:
-  x0: 0.36
-  x1: 0.78
-  y0: 0.35
-  y1: 0.48
+  x0: 0.25
+  x1: 0.72
+  y0: 0.25
+  y1: 0.38
 
 
 # -----------------------------------------------------------------------------
