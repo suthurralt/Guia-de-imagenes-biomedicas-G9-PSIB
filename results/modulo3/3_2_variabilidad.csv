@@ -1,6 +1,6 @@
 tipo,parametro,n,media,desvio,cv_pct
-constriccion,latencia_s,1,0.20037542662116037,,
-constriccion,amplitud_D_px,1,4.497692441731196,,
-constriccion,amplitud_D_pct,1,25.161437228784713,,
-constriccion,amplitud_A_px2,1,110.35014240595939,,
-constriccion,v_pico_px_s,1,12.5436018325276,,
+constriccion,latencia_s,1,0.13360714127301065,,
+constriccion,amplitud_D_px,1,8.915044434421324,,
+constriccion,amplitud_D_pct,1,36.17202510154743,,
+constriccion,amplitud_A_px2,1,283.07789508336145,,
+constriccion,v_pico_px_s,1,15.370116504433895,,
