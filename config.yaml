@@ -137,6 +137,13 @@ modulo3:
   # mejor combinación del barrido de 2.2 (erosión k=3, 2 iteraciones: Dice
   # 0,849 contra la anotación manual). null en `operacion` = sin morfología.
   morfologia:
+    operacion: null
+    kernel: 3
+    iteraciones: 2
+    kernel_forma: ellipse
+
+    # Morfología que se COMPARA en la validación de 3.2 (no se usa en la curva final)
+  comparar_morfologia:
     operacion: erosion
     kernel: 3
     iteraciones: 2
@@ -146,7 +153,7 @@ modulo3:
   # Instante (s) del frame del video sobre el que se calculan forma y textura.
   # Conviene un frame con luz (iris bien iluminado, sin el reflejo de la
   # ventana sobre la pupila).
-  tiempo_frame_s: 5.0
+  tiempo_frame_s: 17
   # Niveles de gris a los que se cuantiza la ROI para entropía y GLCM.
   # El primero es el principal; el resto se usa para comparar.
   niveles_gris: [32, 64]
@@ -168,8 +175,9 @@ modulo3:
   # brillo medio del frame (la luz ilumina toda la cara). Se pueden forzar
   # a mano con una lista de tiempos en segundos, p. ej. [3.84].
   estimulo:
-    t_encendido_s: null
-    t_apagado_s: null
+    t_encendido_s: [16.03]  # Pongo los valores a mano porque como el celular ajusta automaticamente el
+                          # brillo de la pantalla, los tiempos se detectan mal.
+    t_apagado_s: [27.2]
     umbral_salto_min: 6.0  # salto mínimo de brillo entre frames (niveles de gris)
     k_mad: 10              # umbral = max(umbral_salto_min, k_mad · MAD del salto)
     separacion_min_s: 1.0  # dos saltos más cercanos que esto son el mismo evento
@@ -205,11 +213,9 @@ modulo3:
     # Verificación opcional con una regla milimetrada visible en el video
     # (null si no hay). Coordenadas en píxeles del FRAME completo: una fila
     # que cruce las rayitas de los milímetros y el tramo [x0, x1] de la regla.
-    regla:
-      tiempo_s: 0.0
-      fila_px: 552
-      x0_px: 30
-      x1_px: 330
+    # Video_Sofi_1 tenía una regla sobre la cara: tiempo_s 0.0, fila_px 552,
+    # x0_px 30, x1_px 330. Video_Sofi_2 no tiene regla -> null.
+    regla: null
 
   # Validación contra la anotación manual del Módulo 2
   carpeta_anotaciones: results/modulo2/anotaciones_manuales

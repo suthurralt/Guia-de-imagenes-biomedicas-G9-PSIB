@@ -27,6 +27,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 import pandas as pd
+import copy
 
 from src.modulo1 import carga_muestreo as cm
 from src.modulo2 import anotacion as an
@@ -522,18 +523,24 @@ def validar_contra_manual(ruta_video: str | Path, cfg: dict, carpeta_anot: str |
         return pd.DataFrame(), pd.DataFrame(), {}
     alineacion = alineacion.set_index("t_s")
     fps = info_video(ruta_video)["fps"]
+          # Morfología a comparar (solo para esta validación)
+    cfg_cmp = None
+    if cfg["modulo3"].get("comparar_morfologia"):
+        cfg_cmp = copy.deepcopy(cfg)
+        cfg_cmp["modulo3"]["morfologia"] = cfg["modulo3"]["comparar_morfologia"]
     filas, mascaras = [], {}
     for t, manual in anotaciones.items():
         frame = cm.extraer_frame(ruta_video, t)
         roi = cm.recortar_roi(frame, cfg["roi"])
         auto = de.mascara_pupila(roi, cfg)
         ws = seg.segmentar_pupila(roi, cfg)
+        ero = de.mascara_pupila(roi, cfg_cmp) if cfg_cmp else {"mascara": None}
         a_man = int((manual > 0).sum())
         fila = {"t_s": t, "frame": int(round(t * fps)),
                 "dx_px": int(alineacion.loc[t, "dx_px"]), "dy_px": int(alineacion.loc[t, "dy_px"]),
                 "correlacion_ubicacion": alineacion.loc[t, "correlacion"],
                 "A_manual_px2": a_man, "D_manual_px": 2 * np.sqrt(a_man / np.pi)}
-        for nombre, r in [("auto", auto), ("watershed", ws)]:
+        for nombre, r in [("auto", auto), ("watershed", ws), ("erosion", ero)]:
             m = r["mascara"]
             a = int((m > 0).sum()) if m is not None else np.nan
             fila[f"A_{nombre}_px2"] = a
@@ -545,12 +552,12 @@ def validar_contra_manual(ruta_video: str | Path, cfg: dict, carpeta_anot: str |
             fila["A_curva_suave_px2"] = curva.loc[k, "area_suave_px"]
             fila["valido_en_curva"] = bool(curva.loc[k, "valido"])
         filas.append(fila)
-        mascaras[t] = {"roi": roi, "manual": manual, "auto": auto["mascara"], "watershed": ws["mascara"]}
+        mascaras[t] = {"roi": roi, "manual": manual, "auto": auto["mascara"], "watershed": ws["mascara"], "erosion": ero["mascara"]}
 
     tabla = pd.DataFrame(filas)
     resumen = []
     todos = np.ones(len(tabla), dtype=bool)
-    pares = [("watershed", "D_watershed_px", "A_watershed_px2", todos),
+    pares = [("watershed", "D_watershed_px", "A_watershed_px2", todos), ("erosion", "D_erosion_px", "A_erosion_px2", todos),
              ("auto", "D_auto_px", "A_auto_px2", todos)]
     if curva is not None:
         # El mismo método, pero solo en los frames que la limpieza de artefactos acepta
