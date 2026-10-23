@@ -1,7 +1,7 @@
 # Análisis del reflejo fotomotor pupilar — PSIB
 
 Pipeline de procesamiento de imágenes biomédicas sobre videos de la pupila
-(Procesamiento de Señales e Imágenes Biomédicas, ITBA).
+(Procesamiento de Señales e Imágenes Biomédicas, ITBA). Todos los análisis están hechos para el video Video_Sofi_2.mp4
 
 ## Estructura
 
